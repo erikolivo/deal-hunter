@@ -75,9 +75,10 @@ def run(config: Config | None = None) -> None:
     # Save state
     state.save()
 
-    # Send summary
-    stats = state.get_stats()
-    notifier.send_summary(results, stats)
+    # Send summary only if there were alerts
+    if alerts_sent > 0:
+        stats = state.get_stats()
+        notifier.send_summary(results, stats)
 
     logger.info(
         "Run complete: %d processed, %d alerts sent, stats: %s",
