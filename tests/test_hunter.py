@@ -23,9 +23,18 @@ def config() -> Config:
 
 
 @pytest.fixture
-def state(config: Config, tmp_path) -> StateStore:
-    config.state_file = str(tmp_path / "state.json")
-    return StateStore(config)
+def state(tmp_path) -> StateStore:
+    cfg = Config(
+        min_discount_pct=60.0,
+        max_discount_pct=90.0,
+        min_price=5.0,
+        max_price=500.0,
+        anchor_inflation_ratio=1.8,
+        min_anchor_observations=3,
+        alert_cooldown_hours=24,
+        state_file=str(tmp_path / "state.json"),
+    )
+    return StateStore(cfg)
 
 
 @pytest.fixture
@@ -184,12 +193,12 @@ class TestStateStore:
         state.set_alert_cooldown("B042")
         assert state.is_in_cooldown("B042")
 
-    def test_save_and_load(self, config, tmp_path):
-        config.state_file = str(tmp_path / "test_state.json")
-        s1 = StateStore(config)
+    def test_save_and_load(self, tmp_path):
+        cfg = Config(state_file=str(tmp_path / "test_state.json"))
+        s1 = StateStore(cfg)
         p = Product(asin="B043", title="S", deal_price=50, list_price=100)
         s1.record_price(p)
         s1.save()
 
-        s2 = StateStore(config)
+        s2 = StateStore(cfg)
         assert len(s2.get_price_history("B043")) == 1
