@@ -49,10 +49,14 @@ class AmazonDealsClient:
                 logger.warning("Request failed on page %d: %s", page, e)
                 break
 
-            data = resp.json()
-            deals = _extract_deals(data)
+        data = resp.json()
+        deals = _extract_deals(data)
 
-            if not deals:
+        if deals and not all_deals:
+            logger.info("Sample deal keys: %s", list(deals[0].keys()))
+            logger.info("Sample deal: %s", {k: v for k, v in list(deals[0].items())[:15]})
+
+        if not deals:
                 logger.info("No more deals on page %d", page)
                 break
 
