@@ -2,13 +2,8 @@ name: Deal Hunter
 
 on:
   schedule:
-    - cron: "0 */2 * * *"   # Every 2 hours (960 runs/month — fits free tier)
-  workflow_dispatch:          # Manual trigger
-  push:
-    branches: [main]
-    paths:
-      - "src/**"
-      - ".github/workflows/hunt.yml"
+    - cron: "0 */2 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -20,6 +15,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -37,12 +34,12 @@ jobs:
         run: PYTHONPATH=src python -m hunter.main
 
       - name: Commit state
+        if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase
           git add -f state.json
-          git diff --staged --quiet || git commit -m "chore: update state [skip ci]" && git push
+          git diff --staged --quiet || (git commit -m "chore: update state [skip ci]" && git push)
 
   test:
     runs-on: ubuntu-latest
