@@ -1,5 +1,244 @@
 {
-  "price_history": {},
+  "price_history": {
+    "B0FHJ7TKZM": [
+      {
+        "list_price": 99.99,
+        "deal_price": 69.99,
+        "timestamp": "2026-09-02T04:50:11.385732+00:00"
+      }
+    ],
+    "B01LYNW421": [
+      {
+        "list_price": 59.99,
+        "deal_price": 41.97,
+        "timestamp": "2026-09-02T04:50:11.385773+00:00"
+      }
+    ],
+    "B0DHLQT3CG": [
+      {
+        "list_price": 189.99,
+        "deal_price": 103.99,
+        "timestamp": "2026-09-02T04:50:11.385789+00:00"
+      }
+    ],
+    "B0F1DGM1TM": [
+      {
+        "list_price": 299.99,
+        "deal_price": 159.99,
+        "timestamp": "2026-09-02T04:50:11.385801+00:00"
+      }
+    ],
+    "B0F7Z4QZTT": [
+      {
+        "list_price": 69.99,
+        "deal_price": 39.99,
+        "timestamp": "2026-09-02T04:50:11.385811+00:00"
+      }
+    ],
+    "B09XS7JWHH": [
+      {
+        "list_price": 399.99,
+        "deal_price": 198.0,
+        "timestamp": "2026-09-02T04:50:11.385822+00:00"
+      }
+    ],
+    "B0DC91H3JK": [
+      {
+        "list_price": 249.99,
+        "deal_price": 189.99,
+        "timestamp": "2026-09-02T04:50:11.385832+00:00"
+      }
+    ],
+    "B0F2LCBKVN": [
+      {
+        "list_price": 359.0,
+        "deal_price": 199.0,
+        "timestamp": "2026-09-02T04:50:11.385841+00:00"
+      }
+    ],
+    "B0GGRSMXKN": [
+      {
+        "list_price": 699.99,
+        "deal_price": 429.99,
+        "timestamp": "2026-09-02T04:50:11.385850+00:00"
+      }
+    ],
+    "B0GN8YR51C": [
+      {
+        "list_price": 399.0,
+        "deal_price": 319.2,
+        "timestamp": "2026-09-02T04:50:11.385860+00:00"
+      }
+    ],
+    "B0CKYZC93L": [
+      {
+        "list_price": 322.99,
+        "deal_price": 249.0,
+        "timestamp": "2026-09-02T04:50:11.385869+00:00"
+      }
+    ],
+    "B01GNVF8S8": [
+      {
+        "list_price": 99.99,
+        "deal_price": 59.98,
+        "timestamp": "2026-09-02T04:50:11.385878+00:00"
+      }
+    ],
+    "B0GY4TQ2P8": [
+      {
+        "list_price": 1199.0,
+        "deal_price": 649.99,
+        "timestamp": "2026-09-02T04:50:11.385888+00:00"
+      }
+    ],
+    "B0G97GMDSW": [
+      {
+        "list_price": 35.0,
+        "deal_price": 24.0,
+        "timestamp": "2026-09-02T04:50:11.385897+00:00"
+      }
+    ],
+    "B00CJZ91C2": [
+      {
+        "list_price": 68.96,
+        "deal_price": 53.96,
+        "timestamp": "2026-09-02T04:50:11.385906+00:00"
+      }
+    ],
+    "B0DHLQMWW7": [
+      {
+        "list_price": 239.99,
+        "deal_price": 191.99,
+        "timestamp": "2026-09-02T04:50:11.385920+00:00"
+      }
+    ],
+    "B0BVZFQ4DF": [
+      {
+        "list_price": 74.99,
+        "deal_price": 54.93,
+        "timestamp": "2026-09-02T04:50:11.385929+00:00"
+      }
+    ],
+    "B00EINBSEW": [
+      {
+        "list_price": 89.0,
+        "deal_price": 71.2,
+        "timestamp": "2026-09-02T04:50:11.385938+00:00"
+      }
+    ],
+    "B0DJGDC3BD": [
+      {
+        "list_price": 39.99,
+        "deal_price": 17.99,
+        "timestamp": "2026-09-02T04:50:11.385948+00:00"
+      }
+    ],
+    "B09B2SBHQK": [
+      {
+        "list_price": 99.99,
+        "deal_price": 69.99,
+        "timestamp": "2026-09-02T04:50:11.385956+00:00"
+      }
+    ],
+    "B078W9SH24": [
+      {
+        "list_price": 49.2,
+        "deal_price": 39.36,
+        "timestamp": "2026-09-02T04:50:11.385965+00:00"
+      }
+    ],
+    "B08F6GPQQ7": [
+      {
+        "list_price": 179.99,
+        "deal_price": 119.99,
+        "timestamp": "2026-09-02T04:50:11.385974+00:00"
+      }
+    ],
+    "B08BRS6MHS": [
+      {
+        "list_price": 86.99,
+        "deal_price": 64.79,
+        "timestamp": "2026-09-02T04:50:11.385982+00:00"
+      }
+    ],
+    "B09JZ5BG26": [
+      {
+        "list_price": 149.99,
+        "deal_price": 109.99,
+        "timestamp": "2026-09-02T04:50:11.385991+00:00"
+      }
+    ],
+    "B0GJ5S4V78": [
+      {
+        "list_price": 799.99,
+        "deal_price": 598.99,
+        "timestamp": "2026-09-02T04:50:11.385999+00:00"
+      }
+    ],
+    "B0F67KWWQH": [
+      {
+        "list_price": 279.99,
+        "deal_price": 229.99,
+        "timestamp": "2026-09-02T04:50:11.386007+00:00"
+      }
+    ],
+    "B0FP9BCTHL": [
+      {
+        "list_price": 35.99,
+        "deal_price": 23.07,
+        "timestamp": "2026-09-02T04:50:11.386016+00:00"
+      }
+    ],
+    "B0DCF2RJX7": [
+      {
+        "list_price": 45.0,
+        "deal_price": 22.5,
+        "timestamp": "2026-09-02T04:50:11.386025+00:00"
+      }
+    ],
+    "B09GM8JZM9": [
+      {
+        "list_price": 99.99,
+        "deal_price": 59.99,
+        "timestamp": "2026-09-02T04:50:11.386034+00:00"
+      }
+    ],
+    "B09MKPDJRT": [
+      {
+        "list_price": 79.99,
+        "deal_price": 64.94,
+        "timestamp": "2026-09-02T04:50:11.386042+00:00"
+      }
+    ]
+  },
   "alert_cooldowns": {},
-  "processed_deals": []
+  "processed_deals": [
+    "544187b1",
+    "564cc75d",
+    "dbbe43ce",
+    "6ba14a56",
+    "6477831a",
+    "9ba642e6",
+    "d98db69a",
+    "a9a119d7",
+    "b42f2cb2",
+    "662a3f4b",
+    "56ec731e",
+    "0f54f2fa",
+    "7254b0f6",
+    "752c3536",
+    "b81ae1f9",
+    "a0fae030",
+    "3feb2cd3",
+    "ca361ae3",
+    "8aa01158",
+    "5e30b88b",
+    "1b1fd8ac",
+    "535cd940",
+    "69170d7b",
+    "10f6deb5",
+    "7f7c518f",
+    "774d2d72",
+    "c3923b3f"
+  ]
 }
