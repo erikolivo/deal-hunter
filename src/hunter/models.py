@@ -86,24 +86,36 @@ class Product:
             asin = deal.get("product_asin") or deal.get("asin", "")
             if not asin:
                 return None
-            deal_price = float(deal.get("deal_price") or deal.get("price") or 0)
-            list_price = float(deal.get("list_price") or deal.get("original_price") or 0)
-            if deal_price <= 0 or list_price <= 0:
+
+            deal_price = _extract_price(deal, "deal_price") or _extract_price(deal, "price")
+            list_price = _extract_price(deal, "list_price") or _extract_price(deal, "original_price")
+            if deal_price is None or list_price is None or deal_price <= 0 or list_price <= 0:
                 return None
+
             return cls(
                 asin=asin,
-                title=deal.get("product_title") or deal.get("title", "Unknown"),
+                title=deal.get("product_title") or deal.get("deal_title") or deal.get("title", "Unknown"),
                 deal_price=deal_price,
                 list_price=list_price,
                 deal_id=deal.get("deal_id", ""),
-                url=deal.get("product_url") or deal.get("url", ""),
-                image_url=deal.get("product_image") or deal.get("image", ""),
+                url=deal.get("product_url") or deal.get("deal_url") or deal.get("url", ""),
+                image_url=deal.get("product_image") or deal.get("deal_photo") or deal.get("image", ""),
                 rating=_safe_float(deal.get("rating")),
                 reviews_count=_safe_int(deal.get("reviews_count")),
-                deal_end_time=deal.get("deal_end_time") or deal.get("end_time"),
+                deal_end_time=deal.get("deal_end_time") or deal.get("deal_ends_at") or deal.get("end_time"),
             )
         except (ValueError, TypeError, KeyError):
             return None
+
+
+def _extract_price(deal: dict[str, Any], key: str) -> float | None:
+    val = deal.get(key)
+    if val is None:
+        return None
+    if isinstance(val, dict):
+        amount = val.get("amount")
+        return _safe_float(amount)
+    return _safe_float(val)
 
 
 def _safe_float(val: Any) -> float | None:

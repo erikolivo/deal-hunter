@@ -70,8 +70,8 @@ class TestProduct:
         deal = {
             "product_asin": "B006",
             "product_title": "Widget",
-            "deal_price": "25.00",
-            "list_price": "100.00",
+            "deal_price": {"amount": 25.00, "currency": "USD"},
+            "list_price": {"amount": 100.00, "currency": "USD"},
             "deal_id": "D1",
         }
         p = Product.from_api_deal(deal)
@@ -80,12 +80,18 @@ class TestProduct:
         assert p.calculated_discount_pct == 75.0
 
     def test_from_api_deal_missing_asin(self):
-        deal = {"product_title": "No ASIN", "deal_price": "10", "list_price": "50"}
+        deal = {"product_title": "No ASIN", "deal_price": {"amount": 10}, "list_price": {"amount": 50}}
         assert Product.from_api_deal(deal) is None
 
     def test_from_api_deal_zero_prices(self):
-        deal = {"product_asin": "B007", "deal_price": "0", "list_price": "0"}
+        deal = {"product_asin": "B007", "deal_price": {"amount": 0}, "list_price": {"amount": 0}}
         assert Product.from_api_deal(deal) is None
+
+    def test_from_api_deal_flat_prices(self):
+        deal = {"product_asin": "B008", "product_title": "Flat", "deal_price": 30, "list_price": 100}
+        p = Product.from_api_deal(deal)
+        assert p is not None
+        assert p.calculated_discount_pct == 70.0
 
 
 # ── Engine verdict tests ──────────────────────────────────────────
@@ -150,8 +156,8 @@ class TestAPIInconsistency:
         deal = {
             "product_asin": "B030",
             "product_title": "Inconsistent Widget",
-            "deal_price": "30.00",
-            "list_price": "100.00",
+            "deal_price": {"amount": 30.00, "currency": "USD"},
+            "list_price": {"amount": 100.00, "currency": "USD"},
             "savings_percentage": "30",   # API says 30% — WRONG
             "deal_badge": "Lightning",    # API implies good deal
         }
