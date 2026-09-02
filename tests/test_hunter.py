@@ -108,7 +108,7 @@ class TestDiscountEngine:
         assert p.verdict == OUT_OF_RANGE
 
     def test_out_of_range_price_too_high(self, engine):
-        p = Product(asin="B013", title="Expensive", deal_price=200, list_price=600)  # 67% but $200
+        p = Product(asin="B013", title="Expensive", deal_price=600, list_price=800)  # 25% but $600
         engine.evaluate(p)
         assert p.verdict == OUT_OF_RANGE
 
