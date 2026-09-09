@@ -177,8 +177,11 @@ def _extract_price(deal: dict[str, Any], key: str) -> float | None:
     if val is None:
         return None
     if isinstance(val, dict):
-        amount = val.get("amount")
-        return _safe_float(amount)
+        # Try common price keys: amount, min_value, min, value
+        for field in ("amount", "min_value", "min", "value"):
+            if field in val:
+                return _safe_float(val[field])
+        return None
     return _safe_float(val)
 
 

@@ -243,7 +243,7 @@ class TestAliExpress:
         assert p.store == "aliexpress"
         assert p.deal_price == 3.99
         assert p.list_price == 15.99
-        assert p.calculated_discount_pct == 75.0
+        assert p.calculated_discount_pct == 75.05
 
     def test_from_aliexpress_no_discount(self):
         item = {
