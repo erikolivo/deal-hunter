@@ -50,7 +50,7 @@ def run(config: Config | None = None) -> None:
     # ── AliExpress ─────────────────────────────────────────────────
     try:
         ali_client = AliExpressClient(cfg)
-        raw_items = ali_client.search_deals(query="deals", min_discount=50)
+        raw_items = ali_client.search_multi_query()
         logger.info("AliExpress raw items: %d", len(raw_items))
         for item in raw_items:
             p = Product.from_aliexpress(item)
