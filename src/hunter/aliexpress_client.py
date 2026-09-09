@@ -74,6 +74,15 @@ class AliExpressClient:
                                     logger.info("AliExpress data.'%s' sample keys: %s", k, list(v[0].keys()) if isinstance(v[0], dict) else type(v[0]))
                             elif isinstance(v, dict):
                                 logger.info("AliExpress data.'%s' is dict with keys: %s", k, list(v.keys())[:10])
+                        if k == "result":
+                            sr = v.get("searchResult")
+                            if isinstance(sr, dict):
+                                logger.info("AliExpress result.searchResult keys: %s", list(sr.keys()))
+                                for sk, sv in sr.items():
+                                    if isinstance(sv, list):
+                                        logger.info("AliExpress searchResult.'%s' is list with %d items", sk, len(sv))
+                                        if sv and isinstance(sv[0], dict):
+                                            logger.info("AliExpress searchResult.'%s' sample keys: %s", sk, list(sv[0].keys())[:15])
                             else:
                                 logger.info("AliExpress data.'%s' = %s", k, str(v)[:100])
                     elif isinstance(inner, list):
@@ -131,28 +140,37 @@ def _extract_products(data: dict[str, Any]) -> list[dict[str, Any]]:
     if not isinstance(data, dict):
         return []
 
-    # Handle: {data: {result: [...], data: [...]}}
     inner = data.get("data")
-    if isinstance(inner, dict):
-        for key in ("data", "result", "items", "products", "list"):
-            val = inner.get(key)
+    if not isinstance(inner, dict):
+        if isinstance(inner, list):
+            return inner
+        return []
+
+    # Handle: {data: {result: {searchResult: {items: [...]}}}}
+    result = inner.get("result")
+    if isinstance(result, dict):
+        search_result = result.get("searchResult")
+        if isinstance(search_result, dict):
+            for key in ("items", "products", "list", "data"):
+                val = search_result.get(key)
+                if isinstance(val, list) and val:
+                    return val
+        # Handle: {data: {result: {items: [...]}}}
+        for key in ("items", "products", "list", "data"):
+            val = result.get(key)
             if isinstance(val, list) and val:
                 return val
-            # Handle: {data: {data: {items: [...]}}}
-            if isinstance(val, dict):
-                for inner_key in ("items", "products", "list"):
-                    inner_val = val.get(inner_key)
-                    if isinstance(inner_val, list):
-                        return inner_val
+
+    # Handle: {data: {data: {items: [...]}}}
+    data_data = inner.get("data")
+    if isinstance(data_data, dict):
+        for key in ("items", "products", "list"):
+            val = data_data.get(key)
+            if isinstance(val, list) and val:
+                return val
 
     # Handle: {data: [...]}
-    if isinstance(inner, list):
-        return inner
-
-    # Handle: {products: [...]} at top level
-    for key in ("products", "items", "results", "data"):
-        val = data.get(key)
-        if isinstance(val, list):
-            return val
+    if isinstance(inner.get("data"), list):
+        return inner["data"]
 
     return []
