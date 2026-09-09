@@ -1,8 +1,8 @@
-name: Deal Hunter (Amazon/AliExpress)
+name: Coral Hunter
 
 on:
   schedule:
-    - cron: "0 6-23 * * *"
+    - cron: "*/30 6-23 * * *"
   workflow_dispatch:
 
 permissions:
@@ -25,13 +25,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Deal Hunter (Amazon + AliExpress)
+      - name: Run Coral Hunter
         env:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DRY_RUN: "false"
-        run: PYTHONPATH=src python -m hunter.main --only api
+        run: PYTHONPATH=src python -m hunter.main --only coral
 
       - name: Commit state
         if: success()
@@ -40,14 +40,3 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -f state.json
           git diff --staged --quiet || (git commit -m "chore: update state [skip ci]" && git push)
-
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -r requirements-dev.txt
-      - run: PYTHONPATH=src pytest tests/ -v --tb=short

@@ -20,7 +20,7 @@ logging.basicConfig(
 logger = logging.getLogger("hunter")
 
 
-def run(config: Config | None = None) -> None:
+def run(config: Config | None = None, only: str | None = None) -> None:
     cfg = config or load_config()
     errors = cfg.validate()
     if errors:
@@ -28,7 +28,7 @@ def run(config: Config | None = None) -> None:
             logger.error("Config error: %s", e)
         sys.exit(1)
 
-    logger.info("Deal Hunter starting (dry_run=%s)", cfg.dry_run)
+    logger.info("Deal Hunter starting (dry_run=%s, only=%s)", cfg.dry_run, only or "all")
 
     state = StateStore(cfg)
     engine = DiscountEngine(cfg, state)
@@ -37,40 +37,43 @@ def run(config: Config | None = None) -> None:
     all_products: list[Product] = []
 
     # ── Amazon ─────────────────────────────────────────────────────
-    try:
-        amazon_client = AmazonDealsClient(cfg)
-        raw_deals = amazon_client.fetch_deals()
-        logger.info("Amazon raw deals: %d", len(raw_deals))
-        for deal in raw_deals:
-            p = Product.from_api_deal(deal)
-            if p is not None:
-                all_products.append(p)
-    except Exception as e:
-        logger.error("Amazon fetch failed: %s", e)
+    if only in (None, "amazon", "api"):
+        try:
+            amazon_client = AmazonDealsClient(cfg)
+            raw_deals = amazon_client.fetch_deals()
+            logger.info("Amazon raw deals: %d", len(raw_deals))
+            for deal in raw_deals:
+                p = Product.from_api_deal(deal)
+                if p is not None:
+                    all_products.append(p)
+        except Exception as e:
+            logger.error("Amazon fetch failed: %s", e)
 
     # ── AliExpress ─────────────────────────────────────────────────
-    try:
-        ali_client = AliExpressClient(cfg)
-        raw_items = ali_client.search_multi_query()
-        logger.info("AliExpress raw items: %d", len(raw_items))
-        for item in raw_items:
-            p = Product.from_aliexpress(item)
-            if p is not None:
-                all_products.append(p)
-    except Exception as e:
-        logger.error("AliExpress fetch failed: %s", e)
+    if only in (None, "aliexpress", "api"):
+        try:
+            ali_client = AliExpressClient(cfg)
+            raw_items = ali_client.search_multi_query()
+            logger.info("AliExpress raw items: %d", len(raw_items))
+            for item in raw_items:
+                p = Product.from_aliexpress(item)
+                if p is not None:
+                    all_products.append(p)
+        except Exception as e:
+            logger.error("AliExpress fetch failed: %s", e)
 
     # ── Coral (Ecuador) ────────────────────────────────────────────
-    try:
-        coral_client = CoralClient(cfg)
-        raw_coral = coral_client.search_multi_category()
-        logger.info("Coral raw items: %d", len(raw_coral))
-        for item in raw_coral:
-            p = Product.from_coral(item)
-            if p is not None:
-                all_products.append(p)
-    except Exception as e:
-        logger.error("Coral fetch failed: %s", e)
+    if only in (None, "coral"):
+        try:
+            coral_client = CoralClient(cfg)
+            raw_coral = coral_client.search_multi_category()
+            logger.info("Coral raw items: %d", len(raw_coral))
+            for item in raw_coral:
+                p = Product.from_coral(item)
+                if p is not None:
+                    all_products.append(p)
+        except Exception as e:
+            logger.error("Coral fetch failed: %s", e)
 
     logger.info("Total valid products: %d", len(all_products))
 
@@ -107,4 +110,9 @@ def run(config: Config | None = None) -> None:
 
 
 if __name__ == "__main__":
-    run()
+    only_arg = None
+    if "--only" in sys.argv:
+        idx = sys.argv.index("--only")
+        if idx + 1 < len(sys.argv):
+            only_arg = sys.argv[idx + 1]
+    run(only=only_arg)
