@@ -6,6 +6,7 @@ import sys
 from .config import Config, load_config
 from .amazon_deals_client import AmazonDealsClient
 from .aliexpress_client import AliExpressClient
+from .coral_client import CoralClient
 from .discount_engine import DiscountEngine
 from .models import Product
 from .state_store import StateStore
@@ -58,6 +59,18 @@ def run(config: Config | None = None) -> None:
                 all_products.append(p)
     except Exception as e:
         logger.error("AliExpress fetch failed: %s", e)
+
+    # ── Coral (Ecuador) ────────────────────────────────────────────
+    try:
+        coral_client = CoralClient(cfg)
+        raw_coral = coral_client.search_multi_category()
+        logger.info("Coral raw items: %d", len(raw_coral))
+        for item in raw_coral:
+            p = Product.from_coral(item)
+            if p is not None:
+                all_products.append(p)
+    except Exception as e:
+        logger.error("Coral fetch failed: %s", e)
 
     logger.info("Total valid products: %d", len(all_products))
 

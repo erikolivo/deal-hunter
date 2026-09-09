@@ -17,13 +17,24 @@ OUT_OF_RANGE = "OUT_OF_RANGE"
 
 
 class DiscountEngine:
+    # Store-specific discount thresholds
+    STORE_THRESHOLDS: dict[str, tuple[float, float]] = {
+        "coral": (40.0, 100.0),
+    }
+
     def __init__(self, config: Config, state: StateStore) -> None:
         self.config = config
         self.state = state
 
     def evaluate(self, product: Product) -> Product:
+        # Use store-specific thresholds if available, otherwise global config
+        min_disc, max_disc = self.STORE_THRESHOLDS.get(
+            product.store,
+            (self.config.min_discount_pct, self.config.max_discount_pct),
+        )
+
         # Step 1: Check discount is in range
-        if not (self.config.min_discount_pct <= product.calculated_discount_pct <= self.config.max_discount_pct):
+        if not (min_disc <= product.calculated_discount_pct <= max_disc):
             product.verdict = OUT_OF_RANGE
             return product
 

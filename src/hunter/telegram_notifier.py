@@ -22,6 +22,7 @@ VERDICT_EMOJI = {
 STORE_EMOJI = {
     "amazon": "\U0001f4e6",
     "aliexpress": "\U0001f1e6\U0001f1ea",
+    "coral": "\U0001f3ea",
 }
 
 

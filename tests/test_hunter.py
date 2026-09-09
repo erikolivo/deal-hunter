@@ -286,3 +286,178 @@ class TestAliExpress:
         )
         engine.evaluate(p)
         assert p.verdict == OUT_OF_RANGE  # $1 is below min_price $5
+
+
+# ── Coral tests ──────────────────────────────────────────────────
+
+
+SAMPLE_CORAL_HTML = """
+<li class="item product product-item">
+  <div class="product-item-info">
+    <a class="product-item-link" href="https://www.coralhipermercados.com/aceite-oliva">Aceite de Oliva 500ml</a>
+    <div class="price-box price-final_price" data-role="priceBox" data-product-id="999">
+      <span class="old-price">
+        <span class="price-container">
+          <span data-price-amount="15.99" data-price-type="oldPrice" class="price-wrapper">
+            <span class="price">$15,99</span>
+          </span>
+        </span>
+      </span>
+      <span class="special-price">
+        <span class="price-container">
+          <span data-price-amount="7.99" data-price-type="finalPrice" class="price-wrapper">
+            <span class="price">$7,99</span>
+          </span>
+        </span>
+      </span>
+    </div>
+  </div>
+</li>
+"""
+
+SAMPLE_CORAL_NO_DISCOUNT_HTML = """
+<li class="item product product-item">
+  <div class="product-item-info">
+    <a class="product-item-link" href="https://www.coralhipermercados.com/sin-descuento">Sin Descuento</a>
+    <div class="price-box price-final_price" data-role="priceBox" data-product-id="888">
+      <span class="special-price">
+        <span class="price-container">
+          <span data-price-amount="10.00" data-price-type="finalPrice" class="price-wrapper">
+            <span class="price">$10,00</span>
+          </span>
+        </span>
+      </span>
+    </div>
+  </div>
+</li>
+"""
+
+SAMPLE_CORAL_2X1_HTML = """
+<li class="item product product-item">
+  <div class="product-item-info">
+    <a class="product-item-link" href="https://www.coralhipermercados.com/cerveza-2x1">Cerveza Pilsener 2x1</a>
+    <p class="product-item-discount">- 2x1</p>
+    <div class="price-box price-final_price" data-role="priceBox" data-product-id="777">
+      <span class="old-price">
+        <span class="price-container">
+          <span data-price-amount="12.00" data-price-type="oldPrice" class="price-wrapper">
+            <span class="price">$12,00</span>
+          </span>
+        </span>
+      </span>
+      <span class="special-price">
+        <span class="price-container">
+          <span data-price-amount="6.00" data-price-type="finalPrice" class="price-wrapper">
+            <span class="price">$6,00</span>
+          </span>
+        </span>
+      </span>
+    </div>
+  </div>
+</li>
+"""
+
+
+class TestCoral:
+    def test_from_coral_valid(self):
+        item = {
+            "product_id": "999",
+            "title": "Aceite de Oliva 500ml",
+            "deal_price": 7.99,
+            "list_price": 15.99,
+            "url": "https://www.coralhipermercados.com/aceite-oliva",
+            "category": "comisariato",
+        }
+        p = Product.from_coral(item)
+        assert p is not None
+        assert p.store == "coral"
+        assert p.asin == "coral:999"
+        assert p.deal_price == 7.99
+        assert p.list_price == 15.99
+        assert p.calculated_discount_pct == 50.03
+        assert "comisariato" in p.title
+
+    def test_from_coral_no_discount(self):
+        item = {
+            "product_id": "888",
+            "title": "Sin Descuento",
+            "deal_price": 10.00,
+            "list_price": 10.00,
+            "url": "https://www.coralhipermercados.com/sin-descuento",
+        }
+        p = Product.from_coral(item)
+        assert p is None  # deal_price >= list_price
+
+    def test_from_coral_missing_id(self):
+        item = {"title": "No ID", "deal_price": 5.00, "list_price": 20.00}
+        assert Product.from_coral(item) is None
+
+    def test_from_coral_zero_prices(self):
+        item = {"product_id": "123", "title": "Zero", "deal_price": 0, "list_price": 0}
+        assert Product.from_coral(item) is None
+
+    def test_engine_coral_watch(self, engine):
+        p = Product(
+            asin="coral:555",
+            title="[Coral] Cerveza",
+            deal_price=6.00,
+            list_price=12.00,
+            store="coral",
+        )
+        engine.evaluate(p)
+        assert p.verdict == WATCH
+
+    def test_engine_coral_out_of_range_low(self, engine):
+        p = Product(
+            asin="coral:666",
+            title="[Coral] Barato",
+            deal_price=2.00,
+            list_price=20.00,
+            store="coral",
+        )
+        engine.evaluate(p)
+        assert p.verdict == OUT_OF_RANGE  # $2 below min_price $5
+
+    def test_coral_parse_item_discount(self):
+        from bs4 import BeautifulSoup
+        from hunter.coral_client import CoralClient
+
+        soup = BeautifulSoup(SAMPLE_CORAL_HTML, "html.parser")
+        item = soup.select_one("li.product-item")
+        client = CoralClient(Config(dry_run=True, rapidapi_key="test"))
+        product = client._parse_item(item, "comisariato")
+
+        assert product is not None
+        assert product["discount_pct"] == 50.0
+        assert product["deal_price"] == 7.99
+        assert product["list_price"] == 15.99
+        assert product["store"] == "coral"
+
+    def test_coral_parse_item_no_discount(self):
+        from bs4 import BeautifulSoup
+        from hunter.coral_client import CoralClient
+
+        soup = BeautifulSoup(SAMPLE_CORAL_NO_DISCOUNT_HTML, "html.parser")
+        item = soup.select_one("li.product-item")
+        client = CoralClient(Config(dry_run=True, rapidapi_key="test"))
+        product = client._parse_item(item, "hogar")
+
+        assert product is None  # no old price → no discount
+
+    def test_coral_parse_item_2x1(self):
+        from bs4 import BeautifulSoup
+        from hunter.coral_client import CoralClient
+
+        soup = BeautifulSoup(SAMPLE_CORAL_2X1_HTML, "html.parser")
+        item = soup.select_one("li.product-item")
+        client = CoralClient(Config(dry_run=True, rapidapi_key="test"))
+        product = client._parse_item(item, "bebidas")
+
+        assert product is not None
+        assert product["is_2x1"] is True
+        assert product["discount_pct"] == 50.0
+
+    def test_coral_store_emoji(self):
+        from hunter.telegram_notifier import STORE_EMOJI
+        assert "coral" in STORE_EMOJI
+        assert STORE_EMOJI["coral"] == "\U0001f3ea"

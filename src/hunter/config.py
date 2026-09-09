@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class Config:
-    # Discount range (inclusive)
+    # Discount range (inclusive) — Amazon/AliExpress
     min_discount_pct: float = 60.0
     max_discount_pct: float = 90.0
 
@@ -27,6 +27,11 @@ class Config:
     deals_page_size: int = 50
     max_pages: int = 10
 
+    # Coral: minimum discount % (lower threshold than Amazon/AliExpress)
+    coral_min_discount_pct: float = 40.0
+    coral_max_pages_per_category: int = 10
+    coral_request_delay: float = 1.5
+
     # RapidAPI
     rapidapi_key: str = field(default_factory=lambda: os.getenv("RAPIDAPI_KEY", ""))
 
@@ -39,6 +44,9 @@ class Config:
 
     # State file path
     state_file: str = "state.json"
+
+    # Request delay between HTTP requests (seconds)
+    request_delay: float = 1.5
 
     def validate(self) -> list[str]:
         errors: list[str] = []

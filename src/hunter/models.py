@@ -171,6 +171,37 @@ class Product:
         except (ValueError, TypeError, KeyError):
             return None
 
+    @classmethod
+    def from_coral(cls, item: dict[str, Any]) -> Product | None:
+        try:
+            pid = item.get("product_id", "")
+            if not pid:
+                return None
+
+            deal_price = _safe_float(item.get("deal_price"))
+            list_price = _safe_float(item.get("list_price"))
+
+            if deal_price is None or list_price is None or deal_price <= 0 or list_price <= 0:
+                return None
+            if deal_price >= list_price:
+                return None
+
+            title = item.get("title", "Unknown")
+            url = item.get("url", "")
+            category = item.get("category", "")
+
+            return cls(
+                asin=f"coral:{pid}",
+                title=f"[Coral {category}] {title}" if category else f"[Coral] {title}",
+                deal_price=deal_price,
+                list_price=list_price,
+                store="coral",
+                url=url,
+                image_url=item.get("image_url", ""),
+            )
+        except (ValueError, TypeError, KeyError):
+            return None
+
 
 def _extract_price(deal: dict[str, Any], key: str) -> float | None:
     val = deal.get(key)
