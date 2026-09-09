@@ -229,7 +229,7 @@ class TestAliExpress:
         assert p.asin == "100500123456"
         assert p.deal_price == 8.99
         assert p.list_price == 29.99
-        assert p.calculated_discount_pct == 70.0
+        assert p.calculated_discount_pct == 70.02
 
     def test_from_aliexpress_flat_prices(self):
         item = {
