@@ -64,13 +64,20 @@ class AliExpressClient:
             if page == 1:
                 if isinstance(data, dict):
                     logger.info("AliExpress response keys: %s", list(data.keys()))
-                    for k, v in data.items():
-                        if isinstance(v, list):
-                            logger.info("AliExpress '%s' is list with %d items", k, len(v))
-                        elif isinstance(v, dict):
-                            logger.info("AliExpress '%s' is dict with keys: %s", k, list(v.keys())[:10])
-                        else:
-                            logger.info("AliExpress '%s' = %s", k, str(v)[:100])
+                    inner = data.get("data")
+                    if isinstance(inner, dict):
+                        logger.info("AliExpress 'data' keys: %s", list(inner.keys()))
+                        for k, v in inner.items():
+                            if isinstance(v, list):
+                                logger.info("AliExpress data.'%s' is list with %d items", k, len(v))
+                                if v:
+                                    logger.info("AliExpress data.'%s' sample keys: %s", k, list(v[0].keys()) if isinstance(v[0], dict) else type(v[0]))
+                            elif isinstance(v, dict):
+                                logger.info("AliExpress data.'%s' is dict with keys: %s", k, list(v.keys())[:10])
+                            else:
+                                logger.info("AliExpress data.'%s' = %s", k, str(v)[:100])
+                    elif isinstance(inner, list):
+                        logger.info("AliExpress 'data' is a list with %d items", len(inner))
                 elif isinstance(data, list):
                     logger.info("AliExpress response is a list with %d items", len(data))
 
@@ -121,21 +128,31 @@ class AliExpressClient:
 
 
 def _extract_products(data: dict[str, Any]) -> list[dict[str, Any]]:
-    if isinstance(data, dict):
-        # Try common response structures
-        for key in ("products", "items", "data", "results", "productList", "itemList"):
-            val = data.get(key)
-            if isinstance(val, list):
+    if not isinstance(data, dict):
+        return []
+
+    # Handle: {data: {result: [...], data: [...]}}
+    inner = data.get("data")
+    if isinstance(inner, dict):
+        for key in ("data", "result", "items", "products", "list"):
+            val = inner.get(key)
+            if isinstance(val, list) and val:
                 return val
-            # Handle nested: data.data
+            # Handle: {data: {data: {items: [...]}}}
             if isinstance(val, dict):
-                for inner_key in ("products", "items", "list"):
-                    inner = val.get(inner_key)
-                    if isinstance(inner, list):
-                        return inner
-        # If data itself contains a list at any level
-        if isinstance(data.get("data"), list):
-            return data["data"]
-    elif isinstance(data, list):
-        return data
+                for inner_key in ("items", "products", "list"):
+                    inner_val = val.get(inner_key)
+                    if isinstance(inner_val, list):
+                        return inner_val
+
+    # Handle: {data: [...]}
+    if isinstance(inner, list):
+        return inner
+
+    # Handle: {products: [...]} at top level
+    for key in ("products", "items", "results", "data"):
+        val = data.get(key)
+        if isinstance(val, list):
+            return val
+
     return []
