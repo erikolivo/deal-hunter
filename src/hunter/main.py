@@ -5,6 +5,7 @@ import sys
 
 from .config import Config, load_config
 from .amazon_deals_client import AmazonDealsClient
+from .aliexpress_client import AliExpressClient
 from .discount_engine import DiscountEngine
 from .models import Product
 from .state_store import StateStore
@@ -28,63 +29,67 @@ def run(config: Config | None = None) -> None:
 
     logger.info("Deal Hunter starting (dry_run=%s)", cfg.dry_run)
 
-    client = AmazonDealsClient(cfg)
     state = StateStore(cfg)
     engine = DiscountEngine(cfg, state)
     notifier = TelegramNotifier(cfg)
 
-    # Fetch deals
-    raw_deals = client.fetch_deals()
-    logger.info("Raw deals fetched: %d", len(raw_deals))
+    all_products: list[Product] = []
 
-    # Convert to Product objects
-    products: list[Product] = []
-    for deal in raw_deals:
-        p = Product.from_api_deal(deal)
-        if p is not None:
-            products.append(p)
-    logger.info("Valid products: %d", len(products))
+    # ── Amazon ─────────────────────────────────────────────────────
+    try:
+        amazon_client = AmazonDealsClient(cfg)
+        raw_deals = amazon_client.fetch_deals()
+        logger.info("Amazon raw deals: %d", len(raw_deals))
+        for deal in raw_deals:
+            p = Product.from_api_deal(deal)
+            if p is not None:
+                all_products.append(p)
+    except Exception as e:
+        logger.error("Amazon fetch failed: %s", e)
 
-    # Evaluate
-    results = engine.evaluate_all(products)
+    # ── AliExpress ─────────────────────────────────────────────────
+    try:
+        ali_client = AliExpressClient(cfg)
+        raw_items = ali_client.search_deals(query="deals", min_discount=50)
+        logger.info("AliExpress raw items: %d", len(raw_items))
+        for item in raw_items:
+            p = Product.from_aliexpress(item)
+            if p is not None:
+                all_products.append(p)
+    except Exception as e:
+        logger.error("AliExpress fetch failed: %s", e)
 
-    # Alert on STRONG_BUY (with cooldown check)
+    logger.info("Total valid products: %d", len(all_products))
+
+    # ── Evaluate ───────────────────────────────────────────────────
+    results = engine.evaluate_all(all_products)
+
+    # ── Alert ──────────────────────────────────────────────────────
     alerts_sent = 0
-    for p in results["STRONG_BUY"]:
-        if not state.is_in_cooldown(p.asin):
-            if notifier.send_alert(p):
-                state.set_alert_cooldown(p.asin)
-                alerts_sent += 1
+    for verdict in ("STRONG_BUY", "WATCH"):
+        for p in results[verdict]:
+            if not state.is_in_cooldown(f"{p.store}:{p.asin}"):
+                if notifier.send_alert(p):
+                    state.set_alert_cooldown(f"{p.store}:{p.asin}")
+                    alerts_sent += 1
 
-    # Alert on WATCH (first time only)
-    for p in results["WATCH"]:
-        if not state.is_in_cooldown(p.asin):
-            if notifier.send_alert(p):
-                state.set_alert_cooldown(p.asin)
-                alerts_sent += 1
-
-    # Record all prices
-    for p in products:
+    # ── Persist state ──────────────────────────────────────────────
+    for p in all_products:
         state.record_price(p)
-
-    # Mark deals as processed
-    for p in products:
         if p.deal_id:
             state.mark_deal_processed(p.deal_id)
 
-    # Save state
     state.save()
 
-    # Send summary only if there were alerts
+    # ── Summary only if there were alerts ──────────────────────────
     if alerts_sent > 0:
         stats = state.get_stats()
         notifier.send_summary(results, stats)
 
     logger.info(
-        "Run complete: %d processed, %d alerts sent, stats: %s",
-        len(products),
+        "Run complete: %d processed, %d alerts sent",
+        len(all_products),
         alerts_sent,
-        stats,
     )
 
 

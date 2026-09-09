@@ -12,6 +12,7 @@ class Product:
     title: str
     deal_price: float
     list_price: float
+    store: str = "amazon"
     deal_id: str = ""
     url: str = ""
     image_url: str = ""
@@ -67,6 +68,7 @@ class Product:
             "title": self.title,
             "deal_price": self.deal_price,
             "list_price": self.list_price,
+            "store": self.store,
             "calculated_discount_pct": self.calculated_discount_pct,
             "verdict": self.verdict,
             "deal_id": self.deal_id,
@@ -97,12 +99,74 @@ class Product:
                 title=deal.get("product_title") or deal.get("deal_title") or deal.get("title", "Unknown"),
                 deal_price=deal_price,
                 list_price=list_price,
+                store="amazon",
                 deal_id=deal.get("deal_id", ""),
                 url=deal.get("product_url") or deal.get("deal_url") or deal.get("url", ""),
                 image_url=deal.get("product_image") or deal.get("deal_photo") or deal.get("image", ""),
                 rating=_safe_float(deal.get("rating")),
                 reviews_count=_safe_int(deal.get("reviews_count")),
                 deal_end_time=deal.get("deal_end_time") or deal.get("deal_ends_at") or deal.get("end_time"),
+            )
+        except (ValueError, TypeError, KeyError):
+            return None
+
+    @classmethod
+    def from_aliexpress(cls, item: dict[str, Any]) -> Product | None:
+        try:
+            pid = str(item.get("product_id") or item.get("id", ""))
+            if not pid:
+                return None
+
+            # AliExpress prices can be nested or flat
+            deal_price = (
+                _extract_price(item, "price")
+                or _extract_price(item, "sale_price")
+                or _extract_price(item, "current_price")
+            )
+            list_price = (
+                _extract_price(item, "original_price")
+                or _extract_price(item, "regular_price")
+                or _extract_price(item, "pre_crossed_out_price")
+            )
+
+            # If no list_price, try to extract from price range
+            if list_price is None and isinstance(item.get("price"), dict):
+                min_p = item["price"].get("min_value") or item["price"].get("min")
+                max_p = item["price"].get("max_value") or item["price"].get("max")
+                if min_p and max_p:
+                    deal_price = _safe_float(min_p)
+                    list_price = _safe_float(max_p)
+
+            if deal_price is None or list_price is None or deal_price <= 0 or list_price <= 0:
+                return None
+
+            # AliExpress: if deal >= list, no discount
+            if deal_price >= list_price:
+                return None
+
+            title = (
+                item.get("title")
+                or item.get("product_title")
+                or item.get("name")
+                or "Unknown"
+            )
+
+            # Build URL
+            url = item.get("product_url") or item.get("url") or item.get("detail_url") or ""
+            if not url and pid:
+                url = f"https://www.aliexpress.com/item/{pid}.html"
+
+            return cls(
+                asin=pid,
+                title=title[:200],
+                deal_price=deal_price,
+                list_price=list_price,
+                store="aliexpress",
+                deal_id=str(item.get("deal_id", "")),
+                url=url,
+                image_url=item.get("image") or item.get("product_image") or item.get("main_image") or "",
+                rating=_safe_float(item.get("rating") or item.get("average_star")),
+                reviews_count=_safe_int(item.get("reviews_count") or item.get("trade_count") or item.get("orders")),
             )
         except (ValueError, TypeError, KeyError):
             return None

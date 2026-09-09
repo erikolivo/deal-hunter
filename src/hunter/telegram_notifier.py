@@ -19,6 +19,11 @@ VERDICT_EMOJI = {
     "OUT_OF_RANGE": "\u26aa",
 }
 
+STORE_EMOJI = {
+    "amazon": "\U0001f4e6",
+    "aliexpress": "\U0001f1e6\U0001f1ea",
+}
+
 
 class TelegramNotifier:
     def __init__(self, config: Config) -> None:
@@ -80,12 +85,14 @@ class TelegramNotifier:
 
     def _format_message(self, p: Product) -> str:
         emoji = VERDICT_EMOJI.get(p.verdict, "\u2753")
+        store_emoji = STORE_EMOJI.get(p.store, "\U0001f6d2")
+        store_label = p.store.upper()
         lines = [
-            f"{emoji} <b>{p.verdict}</b>",
+            f"{emoji} <b>{p.verdict}</b>  {store_emoji} {store_label}",
             "",
             f"\U0001f4f1 <b>{_escape(p.title[:80])}</b>",
             "",
-            f"\U0001f3f7\ufe0f ASIN: <code>{p.asin}</code>",
+            f"\U0001f3f7\ufe0f ID: <code>{p.asin}</code>",
             f"\U0001f4b0 Deal: <b>${p.deal_price:.2f}</b>",
             f"\U0001f4b2 List: <s>${p.list_price:.2f}</s>",
             f"\U0001f4b5 Savings: ${p.savings_usd:.2f} ({p.calculated_discount_pct:.1f}%)",

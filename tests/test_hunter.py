@@ -208,3 +208,81 @@ class TestStateStore:
 
         s2 = StateStore(cfg)
         assert len(s2.get_price_history("B043")) == 1
+
+
+# ── AliExpress tests ──────────────────────────────────────────────
+
+
+class TestAliExpress:
+    def test_from_aliexpress_valid(self):
+        item = {
+            "product_id": "100500123456",
+            "title": "Wireless Earbuds Pro",
+            "price": {"min_value": 8.99, "max_value": 15.99, "currency": "USD"},
+            "original_price": {"min_value": 29.99, "max_value": 39.99, "currency": "USD"},
+            "rating": "4.7",
+            "trade_count": "1200",
+        }
+        p = Product.from_aliexpress(item)
+        assert p is not None
+        assert p.store == "aliexpress"
+        assert p.asin == "100500123456"
+        assert p.deal_price == 8.99
+        assert p.list_price == 29.99
+        assert p.calculated_discount_pct == 70.0
+
+    def test_from_aliexpress_flat_prices(self):
+        item = {
+            "product_id": "100500999999",
+            "title": "Phone Case",
+            "sale_price": 3.99,
+            "original_price": 15.99,
+        }
+        p = Product.from_aliexpress(item)
+        assert p is not None
+        assert p.store == "aliexpress"
+        assert p.deal_price == 3.99
+        assert p.list_price == 15.99
+        assert p.calculated_discount_pct == 75.0
+
+    def test_from_aliexpress_no_discount(self):
+        item = {
+            "product_id": "100500888888",
+            "title": "No Discount Item",
+            "price": 20.00,
+            "original_price": 15.00,
+        }
+        p = Product.from_aliexpress(item)
+        assert p is None  # deal_price >= list_price
+
+    def test_from_aliexpress_missing_id(self):
+        item = {"title": "No ID", "price": 10.00, "original_price": 50.00}
+        assert Product.from_aliexpress(item) is None
+
+    def test_from_aliexpress_builds_url(self):
+        item = {"product_id": "100500777777", "title": "URL Test", "price": 5.00, "original_price": 20.00}
+        p = Product.from_aliexpress(item)
+        assert p is not None
+        assert "100500777777" in p.url
+
+    def test_engine_aliexpress_watch(self, engine):
+        p = Product(
+            asin="100500555555",
+            title="Ali Deal",
+            deal_price=10.00,
+            list_price=50.00,
+            store="aliexpress",
+        )
+        engine.evaluate(p)
+        assert p.verdict == WATCH
+
+    def test_engine_aliexpress_out_of_range(self, engine):
+        p = Product(
+            asin="100500444444",
+            title="Cheap Ali",
+            deal_price=1.00,
+            list_price=100.00,
+            store="aliexpress",
+        )
+        engine.evaluate(p)
+        assert p.verdict == OUT_OF_RANGE  # $1 is below min_price $5
